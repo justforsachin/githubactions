@@ -1,11 +1,11 @@
 on:
   push:
-    branches: [main]
+    branches: [master]
   workflow_dispatch:
 
 jobs:
   build:
-    name: Build job
+    name: Build job Example
     runs-on: ubuntu-latest
     steps:
       - name: checkout code
