@@ -1,8 +1,9 @@
-name: Explore GitHub Components
+name: Env Variables Demo
 
 on:
   push:
     branches: [master]
+  workflow_dispatch:
 
 env:
   GLOBAL_ENV: "global-value"
@@ -17,7 +18,8 @@ jobs:
       - name: Use environment variables
         env:
           API_URL: ${{ vars.API_URL }}
-          APP_MODE: ${{ vars.APP_MODE }}
+          DB_PASS: ${{ secrets.DB_PASSWORD }}
         run: |
-          echo "API URL: $API_URL"
-          echo "App Mode: $APP_MODE"
+          echo "Deploying to $API_URL"
+          echo "DB password length: ${#DB_PASS}"
+          echo "DB password is ${DB_PASS}"
