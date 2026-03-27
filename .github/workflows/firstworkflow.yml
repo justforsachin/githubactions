@@ -5,7 +5,7 @@ on:
 
 jobs:
   build:
-    name: Build job Example
+    name: Build job
     runs-on: ubuntu-latest
     steps:
       - name: checkout code
