@@ -1,6 +1,8 @@
 name: Env Variables Demo
 
-on: workflow_dispatch
+on:
+  push:
+    branches: [master]
 
 env:
   GLOBAL_ENV: "global-value"
