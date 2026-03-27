@@ -1,13 +1,11 @@
 name: Condition Demo
 
 on:
-  push:
-    branches: [master]
   workflow_dispatch:
     inputs:
       environment:
         required: true
-        default: master
+        default: dev
 
 jobs:
   deploy:
