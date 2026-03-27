@@ -4,49 +4,20 @@ on:
   push:
     branches: [master]
 
+env:
+  GLOBAL_ENV: "global-value"
+
 jobs:
-  build:
-    name: Build job
+  deploy:
     runs-on: ubuntu-latest
+
+    environment: production  
+
     steps:
-      - name: checkout code
-        uses: actions/checkout@v6
-
-      - name: Display runner info
+      - name: Use environment variables
+        env:
+          API_URL: ${{ vars.API_URL }}
+          APP_MODE: ${{ vars.APP_MODE }}
         run: |
-          echo "Runner os: $RUNNER_OS"
-          echo "Runner Atch: $RUNNER_ARCH"
-          echo "workspace: $GITHUB_WORKSPACE"
-          echo "Repository: $GITHUB_REPOSITORY"
-          echo "Event: $GITHUB_EVENT_NAME"
-          echo "SHA: $GITHUB_SHA"
-
-      - name: List installed tools
-        run: |
-          echo "=== Java ==="
-          java -version 2>&1 || echo 'Not installed'
-          echo "=== Node ==="
-          node --version || echo 'Not installed'
-          echo "=== Python ==="
-          python3 --version || echo 'Not installed'
-          echo "=== Docker ==="
-          docker --version || echo 'Not installed'
-
-  test:
-    name: Test Job
-    runs-on: ubuntu-latest
-    needs: build
-    steps:
-      - name: Run Mock test
-        run: |
-          echo "Running unit test"
-          echo "all tests passes"
-
-  notify:
-    name: Notification Job
-    runs-on: ubuntu-latest
-    needs: [build, test]
-    if: always()
-    steps:
-      - name: Send notification
-        run: echo "Build and test complete for $GITHUB_SHA"
+          echo "API URL: $API_URL"
+          echo "App Mode: $APP_MODE"
