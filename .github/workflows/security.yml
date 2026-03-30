@@ -1,6 +1,8 @@
 name: Security Scans - Secrets & SCA
 
 on:
+  push:
+    branches: [master]
   workflow_dispatch:
 
 jobs:
