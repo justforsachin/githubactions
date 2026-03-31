@@ -1,21 +1,22 @@
-name: Java Build + Coverage (Linux)
+name: Java Build + Coverage (Windows)
 
 on:
-  push:
-    branches: [master]
   workflow_dispatch:
 
 jobs:
-  build-linux:
+  build-windows:
     name: Build, Test & Coverage
-    runs-on: [self-hosted, ubunturunner]
+    runs-on: [self-hosted, windowsrunner]
 
     steps:
       # ── Clean workspace (raw self-hosted runners don't auto-clean) ──
       - name: Clean workspace
         run: |
-          echo "Cleaning workspace: $GITHUB_WORKSPACE"
-          rm -rf "$GITHUB_WORKSPACE"/*
+          Write-Host "Cleaning workspace: $env:GITHUB_WORKSPACE"
+          if (Test-Path "$env:GITHUB_WORKSPACE\*") {
+            Remove-Item -Recurse -Force "$env:GITHUB_WORKSPACE\*"
+          }
+        shell: powershell
 
       # ── Checkout ──
       - name: Checkout code
@@ -24,25 +25,27 @@ jobs:
       # ── Verify tools are available ──
       - name: Verify prerequisites
         run: |
-          echo "=== Java ==="
+          Write-Host "=== Java ==="
           java -version
-          echo ""
-          echo "=== Maven ==="
+          Write-Host ""
+          Write-Host "=== Maven ==="
           mvn -version
-          echo ""
-          echo "=== Git ==="
+          Write-Host ""
+          Write-Host "=== Git ==="
           git --version
+        shell: powershell
 
       # ── Build + Test + JaCoCo ──
       - name: Build and generate coverage
         run: mvn clean verify
+        shell: cmd
 
       # ── Publish JUnit results ──
       - name: Publish Test Report
         uses: dorny/test-reporter@v1
         if: always()
         with:
-          name: JUnit Tests (Linux)
+          name: JUnit Tests (Windows)
           path: target/surefire-reports/*.xml
           reporter: java-junit
 
@@ -50,28 +53,29 @@ jobs:
       - name: Upload JaCoCo Coverage Report
         uses: actions/upload-artifact@v4
         with:
-          name: jacoco-coverage-linux
+          name: jacoco-coverage-windows
           path: target/site/jacoco/
 
       # ── Coverage threshold check (unstable warning) ──
       - name: Check coverage threshold
         run: |
-          COVERAGE=$(python3 -c "
-          import xml.etree.ElementTree as ET
-          tree = ET.parse('target/site/jacoco/jacoco.xml')
-          counter = tree.findall('.//counter[@type=\"LINE\"]')[-1]
-          missed = int(counter.get('missed'))
-          covered = int(counter.get('covered'))
-          print(round(covered / (covered + missed) * 100, 2))
-          ")
-          echo "==============================="
-          echo "  Line Coverage: ${COVERAGE}%"
-          echo "==============================="
-          if (( $(echo "$COVERAGE < 80" | bc -l) )); then
-            echo "::warning::UNSTABLE - Coverage is ${COVERAGE}%, below 80% target"
-          else
-            echo "::notice::Coverage is ${COVERAGE}% - target met!"
-          fi
+          [xml]$jacoco = Get-Content "target/site/jacoco/jacoco.xml"
+          $counters = $jacoco.report.counter | Where-Object { $_.type -eq "LINE" }
+          $missed = [int]$counters.missed
+          $covered = [int]$counters.covered
+          $total = $missed + $covered
+          $coverage = [math]::Round(($covered / $total) * 100, 2)
+
+          Write-Host "==============================="
+          Write-Host "  Line Coverage: $coverage%"
+          Write-Host "==============================="
+
+          if ($coverage -lt 80) {
+            Write-Host "::warning::UNSTABLE - Coverage is $coverage%, below 80% target"
+          } else {
+            Write-Host "::notice::Coverage is $coverage% - target met!"
+          }
+        shell: powershell
 
       # ── Post coverage summary on PR ──
       - name: JaCoCo PR Comment
@@ -82,5 +86,6 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           min-coverage-overall: 60
           min-coverage-changed-files: 80
-          title: "## Code Coverage Report (Linux)"
+          title: "## Code Coverage Report (Windows)"
           update-comment: true
+          
